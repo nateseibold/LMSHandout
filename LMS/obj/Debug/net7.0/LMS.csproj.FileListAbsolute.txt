@@ -253,3 +253,4 @@
 /Users/nateseibold/Downloads/LMSHandout/LMS/obj/Debug/net7.0/LMS.pdb
 /Users/nateseibold/Downloads/LMSHandout/LMS/obj/Debug/net7.0/LMS.genruntimeconfig.cache
 /Users/nateseibold/Downloads/LMSHandout/LMS/obj/Debug/net7.0/ref/LMS.dll
+/Users/nateseibold/Downloads/LMSHandout/LMS/obj/Debug/net7.0/LMS.sourcelink.json
