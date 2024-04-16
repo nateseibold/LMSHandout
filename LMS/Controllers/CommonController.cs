@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Mvc;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 [assembly: InternalsVisibleTo( "LMSControllerTests" )]
@@ -87,6 +88,7 @@ namespace LMS.Controllers
                         into fullTable
                         from f in fullTable
                         select new { season = i.Season, year = i.SYear, location = i.Location, start = i.StartTime, end = i.EndTime, fname = f.FName, lname = f.LName};
+
             return Json(query.ToArray());
         }
 
@@ -103,8 +105,25 @@ namespace LMS.Controllers
         /// <param name="asgname">The name of the assignment in the category</param>
         /// <returns>The assignment contents</returns>
         public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname)
-        {            
-            return Content("");
+        {
+            var queryCourse = from i in db.Courses
+                         where i.Subject == subject && i.Number == num
+                         select i.CId;
+
+            var queryClass = from i in db.Classes
+                             where i.Season == season && i.SYear == year && i.Course == queryCourse.ToArray()[0]
+                             select i.ClassId;
+
+            var query = from i in db.Assignments
+                        where i.Name == asgname
+                        join j in db.AssignmentCats
+                        on category equals j.Name
+                        into categories
+                        from c in categories
+                        where c.Class == queryClass.ToArray()[0]
+                        select i.Content;
+		   
+            return Content(query.ToArray()[0]);
         }
 
 
@@ -123,8 +142,34 @@ namespace LMS.Controllers
         /// <param name="uid">The uid of the student who submitted it</param>
         /// <returns>The submission text</returns>
         public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
-        {            
-            return Content("");
+        {
+            var queryCourse = from i in db.Courses
+                              where i.Subject == subject && i.Number == num
+                              select i.CId;
+
+            var queryClass = from i in db.Classes
+                             where i.Season == season && i.SYear == year && i.Course == queryCourse.ToArray()[0]
+                             select i.ClassId;
+
+            var queryStudent = from i in db.Students
+                               where i.UId == uid
+                               select i.SId;
+
+            var queryAssignment = from i in db.Assignments
+                        where i.Name == asgname
+                        join j in db.AssignmentCats
+                        on category equals j.Name
+                        into categories
+                        from c in categories
+                        where c.Class == queryClass.ToArray()[0]
+                        select c.AssId;
+
+            var query = from i in db.Submissions
+                        where i.Assigment == queryAssignment.ToArray()[0] && i.Student == queryStudent.ToArray()[0]
+                        select i.Contents;
+
+
+            return Content(query.ToArray()[0]);
         }
 
 
@@ -145,7 +190,36 @@ namespace LMS.Controllers
         /// or an object containing {success: false} if the user doesn't exist
         /// </returns>
         public IActionResult GetUser(string uid)
-        {           
+        {
+            var queryProf = from i in db.Professors
+                            where i.UId == uid
+                            join j in db.Departments
+                            on i.Subject equals j.Subject
+                            into full
+                            from f in full
+                            select new { fname = i.FName, lname = i.LName, uid = i.UId, department = f.Name };
+
+            if(queryProf.ToArray().Length != 0)
+                return Json(queryProf.ToArray());
+
+            var queryStudent = from i in db.Students
+                            where i.UId == uid
+                            join j in db.Departments
+                            on i.Subject equals j.Subject
+                            into full
+                            from f in full
+                            select new { fname = i.FName, lname = i.LName, uid = i.UId, department = f.Name };
+
+            if (queryStudent.ToArray().Length != 0)
+                return Json(queryStudent.ToArray());
+
+            var queryAdmin = from i in db.Administrators
+                            where i.UId == uid
+                            select new { fname = i.FName, lname = i.LName, uid = i.UId};
+
+            if (queryAdmin.ToArray().Length != 0)
+                return Json(queryAdmin.ToArray());
+
             return Json(new { success = false });
         }
 
