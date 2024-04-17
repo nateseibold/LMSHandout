@@ -161,7 +161,6 @@ namespace LMS.Controllers
                 var profQuery = from i in db.Professors
                                 where i.UId == instructor
                                 select i.SId;
-
                 class1.Course = query.ToArray()[0];
                 class1.Season = season;
                 class1.SYear = (uint)year;

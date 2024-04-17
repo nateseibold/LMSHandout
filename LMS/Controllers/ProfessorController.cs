@@ -169,24 +169,26 @@ namespace LMS_CustomIdentity.Controllers
                              select i.ClassId;
 
 	        var queryAssignment = from i in db.AssignmentCats
-                                  where i.AssId == queryClass.ToArray()[0]
+                                  where i.Class == queryClass.ToArray()[0]
                                   join j in db.Assignments
                                   on i.AssId equals j.Cat
                                   into full
                                   from f in full
 				                  join s in db.Submissions
 				                  on f.AssId equals s.Assigment
-				                  into newFull
-				                  from nF in newFull
+				                  into newFulls
+				                  from nF in newFulls
 				                  select nF.Student;
-
+	    
             var query = from i in db.AssignmentCats
-                        where i.AssId == queryClass.ToArray()[0]
+                        where i.Class == queryClass.ToArray()[0]
                         join j in db.Assignments
                         on i.AssId equals j.Cat
                         into full
                         from f in full
-                        select new { aname = f.Name, cname = i.Name, due = f.DueDate, submissions = queryAssignment.ToArray().Length };
+                        select new { aname = f.Name, cname = i.Name, due = f.DueDate, submissions = queryAssignment.ToArray().Count() };
+
+            var array = query.ToArray();
 
             return Json(query.ToArray());
         }
@@ -248,7 +250,7 @@ namespace LMS_CustomIdentity.Controllers
 
                 cat.Weight = (uint)catweight;
                 cat.Name = category;
-                cat.Class = queryClass.ToArray()[1];
+                cat.Class = queryClass.ToArray()[0];
 
                 db.AssignmentCats.Add(cat);
                 db.SaveChanges();
