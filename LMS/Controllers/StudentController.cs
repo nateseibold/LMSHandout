@@ -126,7 +126,7 @@ namespace LMS.Controllers
                               on i.AssId equals j.Cat
                               into assignList
                               from a in assignList
-                              select a;
+                              select new { assign = a, cat = i };
 
             var queryStudent = from i in db.Students
                                where i.UId == uid
@@ -134,18 +134,10 @@ namespace LMS.Controllers
 
             var query = from q in queryAssign
                         join s in db.Submissions
-                        on new { A = q.AssId, B = queryStudent.ToArray()[0] } equals new { A = s.Assigment, B = s.Student }
+                        on new { A = q.assign.AssId, B = queryStudent.ToArray()[0] } equals new { A = s.Assigment, B = s.Student }
                         into joined
                         from j in joined.DefaultIfEmpty()
-                        join k in db.Assignments
-                        on j.Assigment equals k.AssId
-                        into joinAssign
-                        from a in joinAssign
-                        join l in db.AssignmentCats
-                        on a.Cat equals l.AssId
-                        into fullTable
-                        from f in fullTable
-                        select new { aname = q.Name, cname = f.Name, due = q.DueDate, score = j.Score };
+                        select new { aname = q.assign.Name, cname = q.cat.Name, due = q.assign.DueDate, score = j == null ? null : (uint?)j.Score};
 
             return Json(query.ToArray());
         }
@@ -302,7 +294,7 @@ namespace LMS.Controllers
             {
                 float gr = CalculateNumber(grade);
 
-                if(gr != -1)
+                if(gr != -1.0f)
                 {
                     count++;
                     gpa += gr;
