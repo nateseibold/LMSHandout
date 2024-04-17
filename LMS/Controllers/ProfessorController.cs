@@ -359,11 +359,10 @@ namespace LMS_CustomIdentity.Controllers
 				                    into newFull
                                     from newfull in newFull
 				                    join stud in db.Students
-				                  
-				                on newfull.Student equals stud.SId
-		                        into finaltable
-				                from ft in finaltable 
-				                select new{fname = ft.FName, lname = ft.LName, uid=ft.UId, time = newfull.SubmitDate, score = newfull.Score};
+                                    on newfull.Student equals stud.SId
+		                            into finaltable
+				                    from ft in finaltable 
+				                    select new{fname = ft.FName, lname = ft.LName, uid=ft.UId, time = newfull.SubmitDate, score = newfull.Score};
 		    
 	
             return Json(queryAssignment.ToArray());

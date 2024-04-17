@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -75,8 +76,24 @@ namespace LMS.Controllers
         /// <param name="uid">The uid of the student</param>
         /// <returns>The JSON array</returns>
         public IActionResult GetMyClasses(string uid)
-        {           
-            return Json(null);
+        {
+            var query = from i in db.Students
+                        where i.UId == uid
+                        join j in db.Enrolleds
+                        on i.SId equals j.Student
+                        into classList
+                        from cL in classList
+                        join k in db.Classes
+                        on cL.Class equals k.ClassId
+			            into classes
+			            from c in classes
+			            join cla in db.Courses
+			            on c.Course equals cla.CId
+                        into fullTable
+                        from full in fullTable
+                        select new { subject = full.Subject, number = full.Number, name = full.Name, season = c.Season, year = c.SYear };
+
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -94,8 +111,43 @@ namespace LMS.Controllers
         /// <param name="uid"></param>
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid)
-        {            
-            return Json(null);
+        {
+            var queryCourse = from i in db.Courses
+                              where i.Subject == subject && i.Number == num
+                              select i.CId;
+
+            var queryClass = from i in db.Classes
+                             where i.Season == season && i.SYear == year && i.Course == queryCourse.ToArray()[0]
+                             select i.ClassId;
+
+            var queryAssign = from i in db.AssignmentCats
+                              where i.Class == queryClass.ToArray()[0]
+                              join j in db.Assignments
+                              on i.AssId equals j.Cat
+                              into assignList
+                              from a in assignList
+                              select a;
+
+            var queryStudent = from i in db.Students
+                               where i.UId == uid
+                               select i.SId;
+
+            var query = from q in queryAssign
+                        join s in db.Submissions
+                        on new { A = q.AssId, B = queryStudent.ToArray()[0] } equals new { A = s.Assigment, B = s.Student }
+                        into joined
+                        from j in joined.DefaultIfEmpty()
+                        join k in db.Assignments
+                        on j.Assigment equals k.AssId
+                        into joinAssign
+                        from a in joinAssign
+                        join l in db.AssignmentCats
+                        on a.Cat equals l.AssId
+                        into fullTable
+                        from f in fullTable
+                        select new { aname = q.Name, cname = f.Name, due = q.DueDate, score = j.Score };
+
+            return Json(query.ToArray());
         }
 
 
@@ -119,8 +171,62 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing {success = true/false}</returns>
         public IActionResult SubmitAssignmentText(string subject, int num, string season, int year,
           string category, string asgname, string uid, string contents)
-        {           
-            return Json(new { success = false });
+        {
+            try
+	        {
+                var queryCourse = from i in db.Courses
+                                  where i.Subject == subject && i.Number == num
+                                  select i.CId;
+
+                var queryClass = from i in db.Classes
+                                 where i.Season == season && i.SYear == year && i.Course == queryCourse.ToArray()[0]
+                                 select i.ClassId;
+
+                var queryStudent = from i in db.Students
+                                   where i.UId == uid
+                                   select i.SId;
+
+                var queryCat = from i in db.AssignmentCats
+                                  where i.Class == queryClass.ToArray()[0] && i.Name == category
+                                  select i.AssId;
+
+                var queryAssign = from i in db.Assignments
+                                  where i.Cat == queryCat.ToArray()[0] && i.Name == asgname
+                                  select i.AssId;
+
+                var query = from i in db.Submissions
+                            where i.Assigment == queryAssign.ToArray()[0] && i.Student == queryStudent.ToArray()[0]
+                            select i;
+		   
+                if(query.ToArray().Count() == 0)
+                {
+                    Submission sub = new Submission();
+                    sub.Student = queryStudent.ToArray()[0];
+                    sub.SubmitDate = DateTime.Now;
+                    sub.Score = 0;
+                    sub.Contents = contents;
+                    sub.Assigment = queryAssign.ToArray()[0];
+
+                    db.Submissions.Add(sub);
+		        }
+                else
+                {
+                    foreach(Submission sub in query.ToArray())
+                    {
+                        sub.Contents = contents;
+                        sub.SubmitDate = DateTime.Now;
+		            }
+
+		        }
+
+                db.SaveChanges();
+	        }
+            catch
+            {
+                return Json(new { success = false });
+            }    
+
+            return Json(new { success = true });
         }
 
 
@@ -135,8 +241,35 @@ namespace LMS.Controllers
         /// <returns>A JSON object containing {success = {true/false}. 
         /// false if the student is already enrolled in the class, true otherwise.</returns>
         public IActionResult Enroll(string subject, int num, string season, int year, string uid)
-        {          
-            return Json(new { success = false});
+        {    
+            try
+            {
+                var queryCourse = from i in db.Courses
+                                  where i.Subject == subject && i.Number == num
+                                  select i.CId;
+
+                var queryClass = from i in db.Classes
+                                 where i.Season == season && i.SYear == year && i.Course == queryCourse.ToArray()[0]
+                                 select i.ClassId;
+
+                var queryStudent = from i in db.Students
+                                   where i.UId == uid
+                                   select i.SId;
+
+                Enrolled enroll = new Enrolled();
+                enroll.Student = queryStudent.ToArray()[0];
+                enroll.Class = queryClass.ToArray()[0];
+                enroll.Grade = "--";
+
+                db.Enrolleds.Add(enroll);
+                db.SaveChanges();
+
+	        }
+            catch
+            {
+                return Json(new { success = false });
+            }
+            return Json(new { success = true});
         }
 
 
@@ -153,9 +286,69 @@ namespace LMS.Controllers
         /// <param name="uid">The uid of the student</param>
         /// <returns>A JSON object containing a single field called "gpa" with the number value</returns>
         public IActionResult GetGPA(string uid)
-        {            
-            return Json(null);
+        {
+            float gpa = 0.0f;
+            int count = 0;
+
+            var queryStudent = from i in db.Students
+                               where i.UId == uid
+                               select i.SId;
+
+            var query = from i in db.Enrolleds
+                        where i.Student == queryStudent.ToArray()[0]
+                        select i.Grade;
+
+            foreach(string grade in query.ToArray())
+            {
+                float gr = CalculateNumber(grade);
+
+                if(gr != -1)
+                {
+                    count++;
+                    gpa += gr;
+		        }
+	        }
+
+            if (count != 0)
+                return Json(gpa / count);
+
+
+            return Json(gpa);
         }
+
+        private float CalculateNumber(string grade)
+        {
+            switch (grade)
+            {
+                case "A":
+                    return 4.0f;
+                case "A-":
+                    return 3.7f;
+                case "B+":
+                    return 3.3f;
+                case "B":
+                    return 3.0f;
+                case "B-":
+                    return 2.7f;
+                case "C+":
+                    return 2.3f;
+                case "C":
+                    return 2.0f;
+                case "C-":
+                    return 1.7f;
+                case "D+":
+                    return 1.3f;
+                case "D":
+                    return 1.0f;
+                case "D-":
+                    return 0.7f;
+                case "E":
+                    return 0.0f;
+                default:
+                    return -1.0f;
+            }
+        }
+
                 
         /*******End code to modify********/
 

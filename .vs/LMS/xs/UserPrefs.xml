@@ -1,0 +1,44 @@
+﻿<Properties StartupConfiguration="{F7779DCA-6458-4556-ABC4-E8D6A159851E}|Default">
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="LMS/Controllers/StudentController.cs">
+    <Files>
+      <File FileName="LMS/Controllers/ProfessorController.cs" Line="419" Column="10" />
+      <File FileName="LMS/Controllers/StudentController.cs" Line="114" Column="32" />
+      <File FileName="LMS/Models/LMSModels/Enrolled.cs" Line="1" Column="1" />
+      <File FileName="LMS/Models/LMSModels/Class.cs" Line="1" Column="1" />
+      <File FileName="LMS/Models/LMSModels/Course.cs" Line="1" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="LMS">
+            <Node name="LMS">
+              <Node name="Areas" expanded="True">
+                <Node name="Identity" expanded="True">
+                  <Node name="Pages" expanded="True">
+                    <Node name="Account" expanded="True">
+                      <Node name="Register.cshtml" expanded="True" />
+                    </Node>
+                  </Node>
+                </Node>
+              </Node>
+              <Node name="Controllers">
+                <Node name="StudentController.cs" selected="True" />
+              </Node>
+              <Node name="Enums" expanded="True" />
+              <Node name="Models" expanded="True">
+                <Node name="LMSModels" expanded="True" />
+              </Node>
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.ItemProperties.LMS PreferredExecutionTarget="/Applications/Google Chrome.app" />
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+</Properties>
